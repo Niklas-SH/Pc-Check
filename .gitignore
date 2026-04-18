@@ -1,0 +1,14 @@
+# Ignore reports and distribution
+reports/
+dist/
+*.zip
+
+# OS / editor
+Thumbs.db
+desktop.ini
+.vscode/
+*.vs
+
+# Node / Python etc (not used, harmless)
+node_modules/
+__pycache__/

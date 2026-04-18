@@ -1,0 +1,147 @@
+﻿
+PC Check Report - 2026-04-18 22:18:10
+
+------------------------------------------------------------------
+System-Ãœbersicht
+------------------------------------------------------------------
+Computer: KILLUA
+Benutzer: never
+OS: Microsoft Windows 11 Home (Version 10.0.26200) Build 26200
+Letzter Neustart: n/a
+Uptime: n/a
+CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz / Cores: 6 / Logical: 12
+Physischer RAM: 15.87 GB
+------------------------------------------------------------------
+Laufende Prozesse (Top 25 nach CPU)
+------------------------------------------------------------------
+Discord                   PID: 14244 CPU:21935,55 Mem(MB):  910,49 Path:
+Discord                   PID: 13832 CPU:15492,05 Mem(MB):  240,06 Path:
+audiodg                   PID:  3280 CPU:3784,58 Mem(MB):   14,21 Path:
+voicemeeterpro            PID: 14236 CPU:3495,81 Mem(MB):   50,02 Path:
+Taskmgr                   PID: 22300 CPU:2916,22 Mem(MB):  191,91 Path:
+msedge                    PID:  7172 CPU:2565,17 Mem(MB):  247,07 Path:
+msedge                    PID: 16688 CPU:1494,61 Mem(MB):  566,53 Path:
+msedge                    PID: 13080 CPU:1220,88 Mem(MB):  333,92 Path:
+explorer                  PID: 18312 CPU: 956,67 Mem(MB):  638,08 Path:
+Discord                   PID: 13628 CPU:  622,5 Mem(MB):  153,54 Path:
+Code                      PID:  3896 CPU:  404,3 Mem(MB):  340,72 Path:
+Code                      PID:  5088 CPU: 403,73 Mem(MB):  575,89 Path:
+Spotify                   PID:  8452 CPU: 310,06 Mem(MB):   261,6 Path:
+msedge                    PID: 21820 CPU: 290,58 Mem(MB):  239,45 Path:
+Spotify                   PID:  4304 CPU: 284,14 Mem(MB):  428,21 Path:
+nvcontainer               PID:  7544 CPU: 244,03 Mem(MB):   87,45 Path:
+msedge                    PID: 21072 CPU: 223,14 Mem(MB):    64,1 Path:
+steamwebhelper            PID: 20740 CPU: 179,88 Mem(MB):   156,1 Path:
+msedge                    PID: 13588 CPU: 139,12 Mem(MB):  344,65 Path:
+nvsphelper64              PID: 10284 CPU: 135,73 Mem(MB):    6,27 Path:
+steamwebhelper            PID: 14588 CPU: 119,02 Mem(MB):   279,5 Path:
+OneDrive.Sync.Service     PID: 11320 CPU: 111,02 Mem(MB):   45,62 Path:
+WhatsApp.Root             PID: 17096 CPU: 109,92 Mem(MB):  198,54 Path:
+steamwebhelper            PID: 10116 CPU:    109 Mem(MB):   73,09 Path:
+msedge                    PID: 23080 CPU: 101,53 Mem(MB):   174,5 Path:
+------------------------------------------------------------------
+KÃ¼rzlich beendete Prozesse (letzte 24 Stunden, wenn geloggt)
+------------------------------------------------------------------
+Keine Informationen zu beendeten Prozessen gefunden. (Event-Logging mÃ¶glicherweise nicht aktiviert oder fehlende Berechtigungen)
+------------------------------------------------------------------
+GelÃ¶schte Dateien (Recycle Bin)
+------------------------------------------------------------------
+Name: README.md
+Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
+GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
+GrÃ¶ÃŸe: 2,25 KB
+
+Name: FirstCheck
+Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
+GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
+GrÃ¶ÃŸe: 26,1 KB
+
+Name: License
+Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
+GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
+GrÃ¶ÃŸe: 808 Bytes
+
+------------------------------------------------------------------
+USB-GerÃ¤te
+------------------------------------------------------------------
+Keine USB-DatentrÃ¤ger erkannt.
+PNP: USB\ROOT_HUB30\4&CDBAEC3&0&0 - USB-Root-Hub (USB 3.0) - Status: OK
+PNP: USB\VID_1A2C&PID_9C05&MI_01\6&1DA46506&0&0001 - USB-Eingabegerät - Status: OK
+PNP: PCI\VEN_8086&DEV_43ED&SUBSYS_50071458&REV_11\3&11583659&0&A0 - Intel(R) USB 3.20 eXtensible-Hostcontroller – 1.20 (Microsoft) - Status: OK
+PNP: USB\VID_046D&PID_C547&MI_02\6&FA24C48&0&0002 - USB-Eingabegerät - Status: OK
+PNP: USB\VID_046D&PID_C547&MI_01\6&FA24C48&0&0001 - USB-Eingabegerät - Status: OK
+PNP: USB\VID_046D&PID_C547&MI_00\6&FA24C48&0&0000 - USB-Eingabegerät - Status: OK
+PNP: USB\VID_10D6&PID_DD00\ACTIONS-STUB-000 - USB-Verbundgerät - Status: OK
+PNP: USB\VID_3206&PID_1278\000000010000 - USB-Verbundgerät - Status: OK
+PNP: USB\VID_046D&PID_C547\5&2E786FD2&0&6 - LIGHTSPEED Receiver - Status: OK
+PNP: USB\VID_1A2C&PID_9C05\5&2E786FD2&0&5 - USB-Verbundgerät - Status: OK
+PNP: USB\VID_3206&PID_1278&MI_03\6&1A04E7EC&0&0003 - USB-Eingabegerät - Status: OK
+PNP: USB\VID_10D6&PID_DD00&MI_00\6&296DA642&0&0000 - USB-Eingabegerät - Status: OK
+PNP: USB\VID_1A2C&PID_9C05&MI_00\6&1DA46506&0&0000 - USB-Eingabegerät - Status: OK
+------------------------------------------------------------------
+Allgemeiner PC-Check
+------------------------------------------------------------------
+Laufwerke:
+C: - Label:  - Frei: 134,7GB / Gesamt: 476,07GB
+
+Netzwerk (IP-Konfiguration):
+Interface: Ethernet - IPv4: 192.168.2.43 - IPv6: 2003:f9:71f:e229:ed98:6517:db4d:6130
+
+Listening TCP-Ports (falls verfÃ¼gbar):
+:::135 - PID 1496 (svchost)
+0.0.0.0:135 - PID 1496 (svchost)
+192.168.2.43:139 - PID 4 (System)
+:::445 - PID 4 (System)
+0.0.0.0:5040 - PID 8772 (svchost)
+127.0.0.1:6463 - PID 14244 (Discord)
+:::7680 - PID 10848 (svchost)
+127.0.0.1:7768 - PID 8452 (Spotify)
+127.0.0.1:9010 - PID 15712 (lghub_agent)
+127.0.0.1:9180 - PID 4000 (lghub_updater)
+0.0.0.0:27036 - PID 18072 (steam)
+127.0.0.1:27060 - PID 18072 (steam)
+::1:42050 - PID 11320 (OneDrive.Sync.Service)
+127.0.0.1:45654 - PID 15712 (lghub_agent)
+0.0.0.0:49469 - PID 8452 (Spotify)
+:::49664 - PID 1232 (lsass)
+0.0.0.0:49664 - PID 1232 (lsass)
+0.0.0.0:49665 - PID 1060 (wininit)
+:::49665 - PID 1060 (wininit)
+:::49666 - PID 1896 (svchost)
+0.0.0.0:49666 - PID 1896 (svchost)
+:::49667 - PID 2656 (svchost)
+0.0.0.0:49667 - PID 2656 (svchost)
+0.0.0.0:49668 - PID 3436 (spoolsv)
+:::49668 - PID 3436 (spoolsv)
+::1:49669 - PID 4172 (jhi_service)
+:::49674 - PID 1136 (services)
+0.0.0.0:49674 - PID 1136 (services)
+0.0.0.0:57621 - PID 8452 (Spotify)
+127.0.0.1:58867 - PID 18072 (steam)
+127.0.0.1:58868 - PID 18072 (steam)
+127.0.0.1:63782 - PID 9000 (Code)
+
+Nicht laufende Dienste (Beispiel, nur gestoppte):
+AarSvc_bd1e6 - Status: Stopped
+ADPSvc - Status: Stopped
+ALG - Status: Stopped
+AppReadiness - Status: Stopped
+ApxSvc - Status: Stopped
+autotimesvc - Status: Stopped
+AxInstSV - Status: Stopped
+BcastDVRUserService_bd1e6 - Status: Stopped
+BDESVC - Status: Stopped
+BEService - Status: Stopped
+BluetoothUserService_bd1e6 - Status: Stopped
+brave - Status: Stopped
+BraveElevationService - Status: Stopped
+bravem - Status: Stopped
+BTAGService - Status: Stopped
+BthAvctpSvc - Status: Stopped
+bthserv - Status: Stopped
+CaptureService_bd1e6 - Status: Stopped
+CertPropSvc - Status: Stopped
+ClipSVC - Status: Stopped
+
+Fertig. Hinweis: Einige Informationen (Event-Logs, PnP) benÃ¶tigen Administrator-Rechte.
+Report gespeichert nach: .\pc-check\pc_check-report.txt
