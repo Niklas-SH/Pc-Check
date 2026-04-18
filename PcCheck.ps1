@@ -16,6 +16,62 @@ param(
 
 # Der folgende Inhalt ist identisch mit pc_check.ps1, damit dieses File alleine lauffähig ist.
 
+function Show-Banner {
+    param([switch]$Colored)
+
+    # Bestimme Skriptordner robust: PSScriptRoot wenn verfügbar, sonst MyInvocation
+    $scriptRoot = $PSScriptRoot
+    if (-not $scriptRoot -or $scriptRoot -eq '') { $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition }
+
+    $candidates = @('banner.txt','banner.asc','ascii-banner.txt','pc-banner.txt')
+    $bannerLines = $null
+
+    foreach ($f in $candidates) {
+        if (-not $scriptRoot -or $scriptRoot -eq '') { break }
+        $p = Join-Path $scriptRoot $f
+        if (-not (Test-Path $p)) { continue }
+
+        # Versuche mehrere Encodings (UTF8, Default, OEM 437) um Anzeige-Probleme zu vermeiden
+        $encodings = @([System.Text.Encoding]::UTF8, [System.Text.Encoding]::Default)
+        try { $encodings += [System.Text.Encoding]::GetEncoding(437) } catch {}
+
+        foreach ($enc in $encodings) {
+            try {
+                $raw = [System.IO.File]::ReadAllText($p, $enc)
+                if ($raw -and $raw.Trim().Length -gt 0) {
+                    $bannerLines = $raw -split "`r?`n"
+                    break
+                }
+            } catch { }
+        }
+        if ($bannerLines) { break }
+    }
+
+    if (-not $bannerLines) {
+        $banner = @'
+ ██▓███   ▄████▄      ▄████▄   ██░ ██ ▓█████ ▄████▄  ▀██ ▄█▀▓█████ ██▀███  
+▓██░  ██ ▒██▀ ▀█     ▒██▀ ▀█ ▒▓██░ ██ ▓█   ▀▒██▀ ▀█   ██▄█▒ ▓█   ▀▓██ ▒ ██▒
+▓██░ ██▓▒▒▓█    ▄    ▒▓█    ▄░▒██▀▀██ ▒███  ▒▓█    ▄ ▓███▄░ ▒███  ▓██ ░▄█ ▒
+▒██▄█▓▒ ▒▒▓▓▄ ▄██    ▒▓▓▄ ▄██ ░▓█ ░██ ▒▓█  ▄▒▓▓▄ ▄██ ▓██ █▄ ▒▓█  ▄▒██▀▀█▄  
+▒██▒ ░  ░▒ ▓███▀     ▒ ▓███▀  ░▓█▒░██▓░▒████▒ ▓███▀  ▒██▒ █▄░▒████░██▓ ▒██▒
+▒▓▒░ ░  ░░ ░▒ ▒      ░ ░▒ ▒    ▒ ░░▒░▒░░ ▒░ ░ ░▒ ▒   ▒ ▒▒ ▓▒░░ ▒░ ░ ▒▓ ░▒▓░
+░▒ ░       ░  ▒        ░  ▒    ▒ ░▒░ ░ ░ ░    ░  ▒   ░ ░▒ ▒░ ░ ░    ░▒ ░ ▒░
+░░       ░           ░         ░  ░░ ░   ░  ░        ░ ░░ ░    ░     ░   ░ 
+         ░ ░         ░ ░       ░  ░  ░   ░  ░ ░      ░  ░      ░     ░     
+'@
+        $bannerLines = $banner -split "`n"
+    }
+
+    # Stelle Console-Ausgabe-Encoding auf UTF8, falls möglich
+    try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
+    foreach ($l in $bannerLines) {
+        if ($Colored) { Write-Host $l -ForegroundColor Cyan } else { Write-Host $l }
+        if ($OutFile -ne "") { $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 }
+    }
+    Write-Host ""
+}
+
 function Log {
     param([string]$Text)
     if ($null -eq $Text) { $Text = "" }
@@ -34,6 +90,9 @@ if ($OutFile -ne "") {
         Write-Warning "Konnte Ausgabedatei nicht vorbereiten: $_"
     }
 }
+
+# Banner anzeigen
+Show-Banner -Colored
 
 Log("PC Check Report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
 Log("")
@@ -80,7 +139,7 @@ try {
     Log("Fehler beim Auslesen der Systeminformationen: $_")
 }
 
-Section "Laufende Prozesse (Top 25 nach CPU)"
+Section "Laufende Prozesse"
 try {
     $procCim = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
     $procMap = @{}
@@ -112,7 +171,7 @@ try {
     Log("Fehler beim Auslesen der Prozesse: $_")
 }
 
-Section "Kürzlich beendete Prozesse (letzte 24 Stunden, wenn geloggt)"
+Section "Kürzlich beendete Prozesse"
 $since = (Get-Date).AddDays(-1)
 $found = $false
 try {
