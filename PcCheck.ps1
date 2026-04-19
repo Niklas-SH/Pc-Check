@@ -68,8 +68,6 @@ if (-not $bannerLines) {
         if ($OutFile -ne "") { $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 }
     }
     Write-Host ""
-}
-
 function Log {
     param(
         [string]$Text,
