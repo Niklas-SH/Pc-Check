@@ -81,6 +81,9 @@ function Log {
     if ($OutFile -ne "") {
         $Text | Out-File -FilePath $OutFile -Append -Encoding UTF8
     }
+    if ($global:LiveLogPath -and ($global:LiveLogPath -ne '')) {
+        try { $Text | Out-File -FilePath $global:LiveLogPath -Append -Encoding UTF8 -ErrorAction SilentlyContinue } catch {}
+    }
     if (-not $NoConsole) {
         switch ($Color.ToLower()) {
             'green'  { Write-Host $Text -ForegroundColor Green }
@@ -91,6 +94,81 @@ function Log {
             'white'  { Write-Host $Text -ForegroundColor White }
             default  { Write-Host $Text }
         }
+    }
+}
+
+# Live-Logger: öffnet eine Logdatei in Downloads und (optional) Notepad für schnelle Sicht
+function Start-LiveLogger {
+    param([switch]$OpenNotepad)
+    try {
+        $dl = Join-Path $env:USERPROFILE 'Downloads'
+    } catch { $dl = $env:TEMP }
+    if (-not (Test-Path $dl)) { New-Item -ItemType Directory -Path $dl -Force | Out-Null }
+    $global:LiveLogPath = Join-Path $dl 'PcCheck_live_log.txt'
+    try { Remove-Item -Path $global:LiveLogPath -Force -ErrorAction SilentlyContinue } catch {}
+    "" | Out-File -FilePath $global:LiveLogPath -Encoding UTF8
+    if ($OpenNotepad) {
+        try { Start-Process -FilePath 'notepad.exe' -ArgumentList $global:LiveLogPath -WindowStyle Normal } catch {}
+    }
+    Log("Live-Log-Datei: $global:LiveLogPath", 'white')
+}
+
+# Liefert globale Pfade zum Scannen wenn keine spezifischen Installationspfade vorhanden sind
+function Get-GlobalScanRoots {
+    $roots = @()
+    $possible = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:LOCALAPPDATA, $env:APPDATA, $env:USERPROFILE)
+    foreach ($p in $possible) { if ($p -and (Test-Path $p)) { $roots += $p } }
+    return $roots | Select-Object -Unique
+}
+
+# Kopiert Inhalte des Papierkorbs in Downloads, kategorisiert nach Typen
+function Copy-RecycleToDownloads {
+    Write-Status "Kopiere Papierkorb-Inhalte in Downloads (kategorisiert)..." 'start'
+    try {
+        $shell = New-Object -ComObject Shell.Application
+        $rb = $shell.Namespace(0xA)
+        if (-not $rb) { Log("Papierkorb nicht verfügbar.", 'yellow'); Write-Status "Papierkorb-Kopie übersprungen." 'info'; return }
+        $downloads = Join-Path $env:USERPROFILE 'Downloads'
+        $base = Join-Path $downloads 'PcCheck_Recycle'
+        $categories = @{
+            'Games' = @('steam','epic','ubisoft','riot','origin','gog')
+            'Installers' = @('.exe','.msi','setup','installer')
+            'Images' = @('.jpg','.jpeg','.png','.bmp','.gif','.webp')
+            'Documents' = @('.pdf','.doc','.docx','.txt','.rtf','.odt','.xlsx','.xls','.ppt','.pptx')
+            'Archives' = @('.zip','.rar','.7z','.tar','.gz')
+            'AudioVideo' = @('.mp3','.wav','.ogg','.mp4','.mkv','.avi')
+        }
+        foreach ($k in $categories.Keys) { $d = Join-Path $base $k ; if (-not (Test-Path $d)) { New-Item -Path $d -ItemType Directory -Force | Out-Null } }
+        $other = Join-Path $base 'Other' ; if (-not (Test-Path $other)) { New-Item -Path $other -ItemType Directory -Force | Out-Null }
+        $items = $rb.Items()
+        if ($items.Count -eq 0) { Log("Papierkorb ist leer. Keine Dateien kopiert.", 'yellow'); Write-Status "Papierkorb-Kopie abgeschlossen." 'done' ; return }
+        foreach ($it in $items) {
+            $name = $it.Name
+            $orig = $rb.GetDetailsOf($it,1)
+            $ext = [IO.Path]::GetExtension($name)
+            $category = 'Other'
+            if ($ext) {
+                foreach ($k in $categories.Keys) { if ($categories[$k] -contains $ext.ToLower()) { $category = $k ; break } }
+            }
+            if ($category -eq 'Other') {
+                $lowerName = $name.ToLower()
+                foreach ($k in $categories.Keys) {
+                    foreach ($term in $categories[$k]) {
+                        if ($lowerName -like "*${term}*") { $category = $k ; break }
+                    }
+                    if ($category -ne 'Other') { break }
+                }
+            }
+            $destFolder = Join-Path $base $category
+            try {
+                $destNS = $shell.Namespace($destFolder)
+                if ($destNS) { $destNS.CopyHere($it) ; Log("Kopiert: $name -> $destFolder") } else { Log("Fehler beim Zugriff auf Zielordner: $destFolder", 'red') }
+            } catch { Log(("Fehler beim Kopieren von {0}: {1}" -f $name, $_), 'red') }
+        }
+        Write-Status "Papierkorb-Kopie abgeschlossen." 'done'
+    } catch {
+        Log("Fehler beim Kopieren des Papierkorbs: $_", 'red')
+        Write-Status "Papierkorb-Kopie fehlgeschlagen." 'error'
     }
 }
 
@@ -106,6 +184,7 @@ if ($OutFile -ne "") {
 
 # Banner anzeigen
 Show-Banner -Colored
+Start-LiveLogger -OpenNotepad
 
 Log("PC Check Report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
 Log("")
@@ -323,6 +402,8 @@ try {
     } else {
         Log("Papierkorb-Zugriff nicht möglich.")
     }
+    # Kopiere Inhalte aus dem Papierkorb in Downloads, kategorisiert
+    Copy-RecycleToDownloads
     Write-Status "Papierkorb geprüft." 'done'
 } catch {
     Log("Fehler beim Auslesen des Papierkorbs: $_")
@@ -437,5 +518,75 @@ Log("")
 Log("Fertig. Hinweis: Einige Informationen (Event-Logs, PnP) benötigen Administrator-Rechte.")
 if ($OutFile -ne "") { Log("Report gespeichert nach: $OutFile") }
 Write-Status "Alle Prüfungen abgeschlossen." 'done'
+
+# Cheat-Risiko Zusammenfassung: scannt gefundene Installationspfade und schätzt Anteil verdächtiger Dateien
+function Summarize-CheatRisk {
+    param(
+        [string[]]$Installs
+    )
+    Write-Status "Erstelle Cheat-Risiko Zusammenfassung..." 'start'
+    try {
+        if (-not $Installs -or $Installs.Count -eq 0) {
+            Log("Keine Installationspfade vorhanden; Cheat-Zusammenfassung übersprungen.", 'yellow')
+            Write-Status "Cheat-Risiko Zusammenfassung übersprungen." 'info'
+            return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
+        }
+
+        $nameRx = '(?i)\b(cheat|cheats|cheater|aimbot|triggerbot|wallhack|esp|injector|inject|loader|cheatengine|trainer|hook|bypass|spoof|untrusted|modmenu|hack|hacks|rage|aim)\b'
+        $contentRx = '(?i)\b(aimbot|triggerbot|wallhack|esp|cheatengine|injector|dllinject|anti[-_ ]?cheat|bypass|untrusted|hook|trainer|cheat)\b'
+
+        $totalFiles = 0
+        $suspicious = @()
+
+        foreach ($root in $Installs) {
+            if (-not $root) { continue }
+            try {
+                if (-not (Test-Path $root)) { continue }
+                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
+                if ($files) {
+                    $totalFiles += $files.Count
+                    $nameMatches = $files | Where-Object { $_.Name -match $nameRx }
+                    if ($nameMatches) { $suspicious += $nameMatches }
+
+                    $candidates = $files | Where-Object { $_.Length -lt 524288 -and -not ($_.Name -match $nameRx) }
+                    foreach ($f in $candidates) {
+                        try {
+                            $raw = Get-Content -Raw -Path $f.FullName -ErrorAction SilentlyContinue -Encoding UTF8
+                            if ($raw -and ($raw -match $contentRx)) { $suspicious += $f }
+                        } catch { }
+                    }
+                }
+            } catch { }
+        }
+
+        $suspiciousUnique = $suspicious | Select-Object -Unique
+        $suspiciousCount = $suspiciousUnique.Count
+        $percent = 0
+        if ($totalFiles -gt 0) { $percent = [math]::Round(($suspiciousCount / $totalFiles) * 100, 2) }
+
+        Section "Cheat-Risiko Zusammenfassung"
+        Log("Gesamtdateien gescannt: $totalFiles")
+        Log("Mögliche Cheat-Dateien: $suspiciousCount")
+        Log("Geschätzter Cheat-Anteil: $percent %")
+        if ($suspiciousCount -gt 0) {
+            Log("Top verdächtige Dateien (Beispiel):", 'yellow')
+            foreach ($f in $suspiciousUnique | Select-Object -First 10) { Log(" - $($f.FullName)", 'yellow') }
+        }
+
+        Write-Status "Cheat-Risiko Zusammenfassung abgeschlossen." 'done'
+        return @{ Total = $totalFiles; Potential = $suspiciousCount; Percent = $percent; Samples = $suspiciousUnique }
+    } catch {
+        Write-Status "Cheat-Risiko Zusammenfassung fehlgeschlagen." 'error'
+        return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
+    }
+}
+
+# Führe Zusammenfassung aus (verwende Installationspfade aus Check-ValTracker wenn vorhanden)
+$insts = @()
+try { if ($val -and $val.Installs -and $val.Installs.Count -gt 0) { $insts = $val.Installs } } catch { }
+if (-not $insts -or $insts.Count -eq 0) { $insts = Get-GlobalScanRoots }
+$cheatSummary = Summarize-CheatRisk -Installs $insts
+Log("")
+Log("Cheat-Summary: Dateien gescannt: $($cheatSummary.Total) | Mögliche Cheats: $($cheatSummary.Potential) | Anteil: $($cheatSummary.Percent)%", 'cyan')
 
 # Ende
