@@ -1,4 +1,4 @@
-<#
+<#.
 PcCheck.ps1 - Single-file bootstrap (DE)
 
 Diese Datei ist eine einsatzbereite Single-File-Version des PC-Checks. Sie kann
@@ -11,7 +11,8 @@ hochgeladen hast.
 #>
 
 param(
-    [string]$OutFile = ""
+    [string]$OutFile = "",
+    [switch]$Quick
 )
 
 # Der folgende Inhalt ist identisch mit pc_check.ps1, damit dieses File alleine lauffähig ist.
@@ -181,14 +182,34 @@ function Copy-RecycleToDownloads {
     }
 }
 
-# Initialisiere Ausgabe-Datei
-if ($OutFile -ne "") {
+# Wenn kein `-OutFile` angegeben wurde, erstelle automatisch einen nummerierten Report
+if ($OutFile -eq "") {
     try {
-        if (Test-Path $OutFile) { Remove-Item -Path $OutFile -Force -ErrorAction SilentlyContinue }
-        "" | Out-File -FilePath $OutFile -Encoding UTF8
+        try { $cwd = (Get-Location).Path } catch { $cwd = $PWD.Path }
+        $pcDir = Join-Path $cwd 'pc-check'
+        if (-not (Test-Path $pcDir)) { New-Item -Path $pcDir -ItemType Directory -Force | Out-Null }
+        $existing = Get-ChildItem -Path $pcDir -Filter 'pc_check-report-scan*.txt' -File -ErrorAction SilentlyContinue
+        $max = 0
+        foreach ($f in $existing) {
+            if ($f.Name -match 'pc_check-report-scan(\d+)\.txt') {
+                $n = [int]$matches[1]
+                if ($n -gt $max) { $max = $n }
+            }
+        }
+        $num = $max + 1
+        $OutFile = Join-Path $pcDir ("pc_check-report-scan{0}.txt" -f $num)
     } catch {
-        Write-Warning "Konnte Ausgabedatei nicht vorbereiten: $_"
+        Write-Warning "Konnte automatischen Ausgabepfad nicht erstellen: $_"
+        $OutFile = Join-Path $env:TEMP ("pc_check-report-scan{0}.txt" -f ([math]::Abs([int](Get-Random -Minimum 1000 -Maximum 9999))))
     }
+}
+
+# Initialisiere Ausgabe-Datei
+try {
+    if (Test-Path $OutFile) { Remove-Item -Path $OutFile -Force -ErrorAction SilentlyContinue }
+    "" | Out-File -FilePath $OutFile -Encoding UTF8
+} catch {
+    Write-Warning "Konnte Ausgabedatei nicht vorbereiten: $_"
 }
 
 # Banner anzeigen
@@ -450,7 +471,12 @@ try {
 
     if ($gamePaths) { $roots += $gamePaths }
     if ($possibleUserGamePaths) { $roots += $possibleUserGamePaths }
-    $roots = $roots | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+    # If Quick mode is requested, avoid scanning the full user profile (can be very large)
+    if ($Quick) {
+        $roots = $roots | Where-Object { $_ -and (Test-Path $_) -and ($_ -ne [string]::Empty) -and ($_ -ne [string]$env:USERPROFILE) } | Select-Object -Unique
+    } else {
+        $roots = $roots | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+    }
 
     Log("Scan-Roots: $($roots -join '; ')", 'white')
 
@@ -459,10 +485,16 @@ try {
     $contentRx = '(?i)\b(aimbot|triggerbot|wallhack|esp|cheatengine|injector|dllinject|anti[-_ ]?cheat|bypass|untrusted|hook|trainer|cheat)\b'
     $totalFiles = 0
     $suspicious = @()
+    # Quick mode limits files per root to speed up the scan
+    if ($Quick) { $perRootLimit = 2000 } else { $perRootLimit = $null }
     foreach ($root in $roots) {
         if (-not $root) { continue }
         try {
-            $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
+            if ($Quick -and $perRootLimit) {
+                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First $perRootLimit
+            } else {
+                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
+            }
             if ($files) {
                 $totalFiles += $files.Count
                 $nameMatches = $files | Where-Object { $_.Name -match $nameRx }
