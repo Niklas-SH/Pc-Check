@@ -4,13 +4,7 @@ PC Check Report - 2026-04-18 22:18:10
 ------------------------------------------------------------------
 System-Ãœbersicht
 ------------------------------------------------------------------
-Computer: KILLUA
-Benutzer: never
-OS: Microsoft Windows 11 Home (Version 10.0.26200) Build 26200
-Letzter Neustart: n/a
-Uptime: n/a
-CPU: Intel(R) Core(TM) i5-10400F CPU @ 2.90GHz / Cores: 6 / Logical: 12
-Physischer RAM: 15.87 GB
+
 ------------------------------------------------------------------
 Laufende Prozesse (Top 25 nach CPU)
 ------------------------------------------------------------------
@@ -47,20 +41,6 @@ Keine Informationen zu beendeten Prozessen gefunden. (Event-Logging mÃ¶glicher
 GelÃ¶schte Dateien (Recycle Bin)
 ------------------------------------------------------------------
 Name: README.md
-Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
-GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
-GrÃ¶ÃŸe: 2,25 KB
-
-Name: FirstCheck
-Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
-GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
-GrÃ¶ÃŸe: 26,1 KB
-
-Name: License
-Original: C:\Users\never\OneDrive\Documents\PCcheckengine-main
-GelÃ¶scht am: ‎18.‎04.‎2026 ‏‎22:02
-GrÃ¶ÃŸe: 808 Bytes
-
 ------------------------------------------------------------------
 USB-GerÃ¤te
 ------------------------------------------------------------------
@@ -83,9 +63,6 @@ Allgemeiner PC-Check
 ------------------------------------------------------------------
 Laufwerke:
 C: - Label:  - Frei: 134,7GB / Gesamt: 476,07GB
-
-Netzwerk (IP-Konfiguration):
-Interface: Ethernet - IPv4: 192.168.2.43 - IPv6: 2003:f9:71f:e229:ed98:6517:db4d:6130
 
 Listening TCP-Ports (falls verfÃ¼gbar):
 :::135 - PID 1496 (svchost)
