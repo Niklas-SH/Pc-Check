@@ -19,9 +19,11 @@ param(
 function Show-Banner {
     param([switch]$Colored)
 
-    # Bestimme Skriptordner robust: PSScriptRoot wenn verfügbar, sonst MyInvocation
+    # Bestimme Skriptordner robust
     $scriptRoot = $PSScriptRoot
-    if (-not $scriptRoot -or $scriptRoot -eq '') { $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition }
+    if (-not $scriptRoot -or $scriptRoot -eq '') { 
+        $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition 
+    }
 
     $candidates = @('banner.txt','banner.asc','ascii-banner.txt','pc-banner.txt')
     $bannerLines = $null
@@ -31,7 +33,6 @@ function Show-Banner {
         $p = Join-Path $scriptRoot $f
         if (-not (Test-Path $p)) { continue }
 
-        # Versuche mehrere Encodings (UTF8, Default, OEM 437) um Anzeige-Probleme zu vermeiden
         $encodings = @([System.Text.Encoding]::UTF8, [System.Text.Encoding]::Default)
         try { $encodings += [System.Text.Encoding]::GetEncoding(437) } catch {}
 
@@ -47,8 +48,9 @@ function Show-Banner {
         if ($bannerLines) { break }
     }
 
-if (-not $bannerLines) {
-    $banner = @'
+    # 👉 WENN KEINE DATEI → DEIN ASCII
+    if (-not $bannerLines) {
+        $banner = @'
  ███████████     █████████      █████████  █████   █████ ██████████   █████████  █████   ████ ██████████ ███████████  
 ▒▒███▒▒▒▒▒███   ███▒▒▒▒▒███    ███▒▒▒▒▒███▒▒███   ▒▒███ ▒▒███▒▒▒▒▒█  ███▒▒▒▒▒███▒▒███   ███▒ ▒▒███▒▒▒▒▒█▒▒███▒▒▒▒▒███ 
  ▒███    ▒███  ███     ▒▒▒    ███     ▒▒▒  ▒███    ▒███  ▒███  █ ▒  ███     ▒▒▒  ▒███  ███    ▒███  █ ▒  ▒███    ▒███ 
@@ -59,15 +61,28 @@ if (-not $bannerLines) {
 ▒▒▒▒▒           ▒▒▒▒▒▒▒▒▒      ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒  
 '@
 
-    $bannerLines = $banner -split "`n"
-    # Stelle Console-Ausgabe-Encoding auf UTF8, falls möglich
+        # 👉 WICHTIG: Split in Lines (FIX!)
+        $bannerLines = $banner -split "`n"
+    }
+
+    # UTF8 Encoding setzen
     try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
     foreach ($l in $bannerLines) {
-        if ($Colored) { Write-Host $l -ForegroundColor Red } else { Write-Host $l }
-        if ($OutFile -ne "") { $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 }
+        if ($Colored) { 
+            Write-Host $l -ForegroundColor Red   # 🔴 HIER IST DEINE FARBE
+        } else { 
+            Write-Host $l 
+        }
+
+        if ($OutFile -ne "") { 
+            $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 
+        }
     }
+
     Write-Host ""
+}
+    
 function Log {
     param(
         [string]$Text,
