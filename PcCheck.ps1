@@ -213,13 +213,15 @@ function Write-Status {
         [string]$Message,
         [ValidateSet('start','done','info','warn','error')][string]$State = 'info'
     )
+
     switch ($State) {
-        'start' { $prefix='[-]'; $color='green' }
-        'done'  { $prefix='[+]'; $color='green' }
-        'info'  { $prefix='[ ]'; $color='yellow' }
-        'warn'  { $prefix='[!]'; $color='yellow' }
-        'error' { $prefix='[-]'; $color='red' }
+        'start' { $prefix='[-]'; $color='red' }        # 🔴 -
+        'done'  { $prefix='[+]'; $color='magenta' }    # 🟣 +
+        'info'  { $prefix='[ ]'; $color='yellow' }     # 🟡
+        'warn'  { $prefix='[!]'; $color='yellow' }     # 🟡 !
+        'error' { $prefix='[-]'; $color='red' }        # 🔴 -
     }
+
     $text = "{0} {1}" -f $prefix, $Message
     Log $text $color
 }
