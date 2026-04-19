@@ -73,12 +73,26 @@ function Show-Banner {
 }
 
 function Log {
-    param([string]$Text)
+    param(
+        [string]$Text,
+        [string]$Color = 'Default',
+        [switch]$NoConsole
+    )
     if ($null -eq $Text) { $Text = "" }
     if ($OutFile -ne "") {
         $Text | Out-File -FilePath $OutFile -Append -Encoding UTF8
     }
-    Write-Output $Text
+    if (-not $NoConsole) {
+        switch ($Color.ToLower()) {
+            'green'  { Write-Host $Text -ForegroundColor Green }
+            'yellow' { Write-Host $Text -ForegroundColor Yellow }
+            'red'    { Write-Host $Text -ForegroundColor Red }
+            'cyan'   { Write-Host $Text -ForegroundColor Cyan }
+            'magenta'{ Write-Host $Text -ForegroundColor Magenta }
+            'white'  { Write-Host $Text -ForegroundColor White }
+            default  { Write-Host $Text }
+        }
+    }
 }
 
 # Initialisiere Ausgabe-Datei
@@ -99,11 +113,28 @@ Log("")
 
 function Section {
     param([string]$Title)
-    Log("------------------------------------------------------------------")
-    Log($Title)
-    Log("------------------------------------------------------------------")
+    Log("------------------------------------------------------------------","white")
+    Log($Title,"magenta")
+    Log("------------------------------------------------------------------","white")
 }
 
+function Write-Status {
+    param(
+        [string]$Message,
+        [ValidateSet('start','done','info','warn','error')][string]$State = 'info'
+    )
+    switch ($State) {
+        'start' { $prefix='[-]'; $color='yellow' }
+        'done'  { $prefix='[+]'; $color='green' }
+        'info'  { $prefix='[ ]'; $color='cyan' }
+        'warn'  { $prefix='[!]'; $color='yellow' }
+        'error' { $prefix='[-]'; $color='red' }
+    }
+    $text = "{0} {1}" -f $prefix, $Message
+    Log $text $color
+}
+
+Write-Status "Starte System-Übersicht..." 'start'
 Section "System-Übersicht"
 try {
     $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
@@ -135,10 +166,13 @@ try {
 
     if ($cpu) { Log("CPU: $($cpu.Name) / Cores: $($cpu.NumberOfCores) / Logical: $($cpu.NumberOfLogicalProcessors)") }
     Log("Physischer RAM: $totalMemoryGB GB")
+    Write-Status "System-Übersicht abgeschlossen." 'done'
 } catch {
     Log("Fehler beim Auslesen der Systeminformationen: $_")
+    Write-Status "System-Übersicht fehlgeschlagen." 'error'
 }
 
+Write-Status "Starte Prozessliste (Top 25)..." 'start'
 Section "Laufende Prozesse"
 try {
     $procCim = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue
@@ -167,10 +201,13 @@ try {
     foreach ($pp in $top) {
         Log("{0,-25} PID:{1,6} CPU:{2,7} Mem(MB):{3,8} Path:{4}" -f $pp.Name, $pp.Id, $pp.CPU, $pp.MemoryMB, ($pp.Path -replace '\\','\\'))
     }
+    Write-Status "Prozessliste abgeschlossen." 'done'
 } catch {
     Log("Fehler beim Auslesen der Prozesse: $_")
+    Write-Status "Prozessliste fehlgeschlagen." 'error'
 }
 
+Write-Status "Prüfe kürzlich beendete Prozesse..." 'start'
 Section "Kürzlich beendete Prozesse"
 $since = (Get-Date).AddDays(-1)
 $found = $false
@@ -202,8 +239,12 @@ try {
 }
 if (-not $found) {
     Log("Keine Informationen zu beendeten Prozessen gefunden. (Event-Logging möglicherweise nicht aktiviert oder fehlende Berechtigungen)")
+    Write-Status "Keine Informationen zu beendeten Prozessen gefunden." 'warn'
+} else {
+    Write-Status "Kürzlich beendete Prozesse verarbeitet." 'done'
 }
 
+Write-Status "Prüfe Papierkorb (gelöschte Dateien)..." 'start'
 Section "Gelöschte Dateien (Recycle Bin)"
 try {
     $shell = New-Object -ComObject Shell.Application
@@ -229,10 +270,13 @@ try {
     } else {
         Log("Papierkorb-Zugriff nicht möglich.")
     }
+    Write-Status "Papierkorb geprüft." 'done'
 } catch {
     Log("Fehler beim Auslesen des Papierkorbs: $_")
+    Write-Status "Papierkorb-Prüfung fehlgeschlagen." 'error'
 }
 
+Write-Status "Ermittle USB-Geräte und PnP-Informationen..." 'start'
 Section "USB-Geräte"
 try {
     $usbDrives = Get-CimInstance Win32_DiskDrive -ErrorAction SilentlyContinue | Where-Object { $_.InterfaceType -eq 'USB' }
@@ -266,10 +310,13 @@ try {
             Log("Keine PnP-Informationen für USB gefunden.")
         }
     }
+    Write-Status "USB-Geräte geprüft." 'done'
 } catch {
     Log("Fehler beim Auslesen der USB-Geräte: $_")
+    Write-Status "USB-Geräte-Prüfung fehlgeschlagen." 'error'
 }
 
+Write-Status "Starte allgemeinen PC-Check..." 'start'
 Section "Allgemeiner PC-Check"
 try {
     Log("Laufwerke:")
@@ -312,12 +359,15 @@ try {
     Get-Service | Where-Object { $_.Status -ne 'Running' } | Select-Object -First 20 | ForEach-Object {
         Log("$($_.Name) - Status: $($_.Status)")
     }
+    Write-Status "Allgemeiner PC-Check abgeschlossen." 'done'
 } catch {
     Log("Fehler beim allgemeinen PC-Check: $_")
+    Write-Status "Allgemeiner PC-Check fehlgeschlagen." 'error'
 }
 
 Log("")
 Log("Fertig. Hinweis: Einige Informationen (Event-Logs, PnP) benötigen Administrator-Rechte.")
 if ($OutFile -ne "") { Log("Report gespeichert nach: $OutFile") }
+Write-Status "Alle Prüfungen abgeschlossen." 'done'
 
 # Ende
