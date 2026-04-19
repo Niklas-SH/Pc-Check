@@ -56,7 +56,7 @@ function Show-Banner {
  ▒███▒▒▒▒▒▒  ▒███            ▒███          ▒███▒▒▒▒▒███  ▒███▒▒█   ▒███          ▒███▒▒███    ▒███▒▒█    ▒███▒▒▒▒▒███ 
  ▒███        ▒▒███     ███   ▒▒███     ███ ▒███    ▒███  ▒███ ▒   █▒▒███     ███ ▒███ ▒▒███   ▒███ ▒   █ ▒███    ▒███ 
  █████        ▒▒█████████     ▒▒█████████  █████   █████ ██████████ ▒▒█████████  █████ ▒▒████ ██████████ █████   █████
-▒▒▒▒▒          ▒▒▒▒▒▒▒▒▒       ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒                                                                                                                                                                                                                                                                                                                                                                  
+▒▒▒▒▒          ▒▒▒▒▒▒▒▒▒       ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒   
 '@
         $bannerLines = $banner -split "`n"
     }
@@ -123,14 +123,68 @@ function Write-Status {
         [ValidateSet('start','done','info','warn','error')][string]$State = 'info'
     )
     switch ($State) {
-        'start' { $prefix='[-]'; $color='yellow' }
+        'start' { $prefix='[-]'; $color='green' }
         'done'  { $prefix='[+]'; $color='green' }
-        'info'  { $prefix='[ ]'; $color='cyan' }
+        'info'  { $prefix='[ ]'; $color='yellow' }
         'warn'  { $prefix='[!]'; $color='yellow' }
         'error' { $prefix='[-]'; $color='red' }
     }
     $text = "{0} {1}" -f $prefix, $Message
     Log $text $color
+}
+
+function Check-ValTracker {
+    # Same detection/extraction logic as pc_check.ps1 - return Found/Installs/Accounts
+    Write-Status "Suche nach VAL Tracker..." 'start'
+    $foundInstalls = @()
+    $usernames = @()
+    try {
+        $procs = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '(?i)valtracker|val-tracker|valtr|val.*tracker' }
+        foreach ($p in $procs) { if ($p.ExecutablePath) { $foundInstalls += (Split-Path -Parent $p.ExecutablePath) } else { $foundInstalls += $p.Name } }
+    } catch { }
+
+    $uninstallRoots = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall','HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall')
+    foreach ($root in $uninstallRoots) {
+        try {
+            $items = Get-ItemProperty -Path ($root + '\*') -ErrorAction SilentlyContinue
+            foreach ($it in $items) {
+                if ($it.DisplayName -and ((($it.DisplayName -match '(?i)val') -and ($it.DisplayName -match '(?i)track')) -or ($it.DisplayName -match '(?i)valtracker'))) {
+                    if ($it.InstallLocation) { $foundInstalls += $it.InstallLocation } elseif ($it.UninstallString) { $foundInstalls += $it.UninstallString } else { $foundInstalls += $it.DisplayName }
+                }
+            }
+        } catch { }
+    }
+
+    $roots = @($env:ProgramFiles, ${env:ProgramFiles(x86)}, $env:LOCALAPPDATA, $env:APPDATA) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
+    foreach ($r in $roots) {
+        try {
+            $dirs = Get-ChildItem -Path $r -Directory -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '(?i)val.*track' -or $_.Name -match '(?i)valtracker' }
+            foreach ($d in $dirs) { $foundInstalls += $d.FullName }
+        } catch { }
+    }
+
+    $foundInstalls = $foundInstalls | Select-Object -Unique
+    if (-not $foundInstalls -or $foundInstalls.Count -eq 0) { Write-Status "VAL Tracker nicht gefunden." 'info'; return @{ Found = $false; Installs = @(); Accounts = @() } }
+
+    foreach ($path in $foundInstalls) {
+        if (-not (Test-Path $path)) { continue }
+        try {
+            $files = Get-ChildItem -Path $path -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '(?i)account|user|login|profile' }
+            foreach ($f in $files) {
+                try {
+                    $raw = Get-Content -Raw -Path $f.FullName -ErrorAction SilentlyContinue
+                    if (-not $raw) { continue }
+                    $regexes = @('(?i)"username"\s*:\s*"([^"\\]+)"','(?i)"user"\s*:\s*"([^"\\]+)"','(?i)"displayname"\s*:\s*"([^"\\]+)"','(?i)"login"\s*:\s*"([^"\\]+)"','(?i)(?<=\b)(?:user(?:name)?|login|displayname|account)\b\s*[:=]\s*"?([^"\s,\}]+)')
+                    foreach ($rx in $regexes) { foreach ($m in [regex]::Matches($raw,$rx)) { if ($m.Groups.Count -ge 2) { $usernames += $m.Groups[1].Value } } }
+                    foreach ($ln in $raw -split "`r?`n") { if ($ln -match '(?i)(user(name)?|login|account|displayname)\s*[:=]\s*(\S+)') { $usernames += $matches[3] } }
+                } catch { }
+            }
+        } catch { }
+    }
+
+    $usernames = $usernames | Where-Object { $_ -and $_.Trim().Length -gt 0 } | Select-Object -Unique
+    Write-Status "VAL Tracker Prüfung beendet." 'done'
+    return @{ Found = $true; Installs = $foundInstalls; Accounts = $usernames }
 }
 
 Write-Status "Starte System-Übersicht..." 'start'
@@ -314,6 +368,21 @@ try {
     Log("Fehler beim Auslesen der USB-Geräte: $_")
     Write-Status "USB-Geräte-Prüfung fehlgeschlagen." 'error'
 }
+
+# Prüfe VAL Tracker (nur Account-Namen anzeigen)
+Write-Status "Überprüfe VAL Tracker auf Accounts..." 'start'
+$val = Check-ValTracker
+if ($val.Found) {
+    Section "VAL Tracker (Accounts)"
+    if ($val.Accounts -and $val.Accounts.Count -gt 0) {
+        foreach ($u in $val.Accounts) { Log("- $u", 'green') }
+    } else {
+        Log("VAL Tracker ist installiert, aber keine Accounts gefunden.", 'yellow')
+    }
+} else {
+    Log("VAL Tracker nicht installiert.", 'cyan')
+}
+Write-Status "VAL Tracker Prüfung abgeschlossen." 'done'
 
 Write-Status "Starte allgemeinen PC-Check..." 'start'
 Section "Allgemeiner PC-Check"
