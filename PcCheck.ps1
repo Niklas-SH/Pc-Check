@@ -1,4 +1,4 @@
-<#.
+<#
 PcCheck.ps1 - Single-file bootstrap (DE)
 
 Diese Datei ist eine einsatzbereite Single-File-Version des PC-Checks. Sie kann
@@ -11,8 +11,7 @@ hochgeladen hast.
 #>
 
 param(
-    [string]$OutFile = "",
-    [switch]$Quick
+    [string]$OutFile = ""
 )
 
 # Der folgende Inhalt ist identisch mit pc_check.ps1, damit dieses File alleine lauffähig ist.
@@ -20,9 +19,11 @@ param(
 function Show-Banner {
     param([switch]$Colored)
 
-    # Bestimme Skriptordner robust: PSScriptRoot wenn verfügbar, sonst MyInvocation
+    # Bestimme Skriptordner robust
     $scriptRoot = $PSScriptRoot
-    if (-not $scriptRoot -or $scriptRoot -eq '') { $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition }
+    if (-not $scriptRoot -or $scriptRoot -eq '') { 
+        $scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Definition 
+    }
 
     $candidates = @('banner.txt','banner.asc','ascii-banner.txt','pc-banner.txt')
     $bannerLines = $null
@@ -32,7 +33,6 @@ function Show-Banner {
         $p = Join-Path $scriptRoot $f
         if (-not (Test-Path $p)) { continue }
 
-        # Versuche mehrere Encodings (UTF8, Default, OEM 437) um Anzeige-Probleme zu vermeiden
         $encodings = @([System.Text.Encoding]::UTF8, [System.Text.Encoding]::Default)
         try { $encodings += [System.Text.Encoding]::GetEncoding(437) } catch {}
 
@@ -48,46 +48,55 @@ function Show-Banner {
         if ($bannerLines) { break }
     }
 
+    # 👉 WENN KEINE DATEI → DEIN ASCII
     if (-not $bannerLines) {
         $banner = @'
- ███████████    █████████       █████████  █████   █████ ██████████   █████████  █████   ████ ██████████ ███████████  
-▒▒███▒▒▒▒▒███  ███▒▒▒▒▒███     ███▒▒▒▒▒███▒▒███   ▒▒███ ▒▒███▒▒▒▒▒█  ███▒▒▒▒▒███▒▒███   ███▒ ▒▒███▒▒▒▒▒█▒▒███▒▒▒▒▒███ 
- ▒███    ▒███ ███     ▒▒▒     ███     ▒▒▒  ▒███    ▒███  ▒███  █ ▒  ███     ▒▒▒  ▒███  ███    ▒███  █ ▒  ▒███    ▒███ 
- ▒██████████ ▒███            ▒███          ▒███████████  ▒██████   ▒███          ▒███████     ▒██████    ▒██████████  
- ▒███▒▒▒▒▒▒  ▒███            ▒███          ▒███▒▒▒▒▒███  ▒███▒▒█   ▒███          ▒███▒▒███    ▒███▒▒█    ▒███▒▒▒▒▒███ 
- ▒███        ▒▒███     ███   ▒▒███     ███ ▒███    ▒███  ▒███ ▒   █▒▒███     ███ ▒███ ▒▒███   ▒███ ▒   █ ▒███    ▒███ 
- █████        ▒▒█████████     ▒▒█████████  █████   █████ ██████████ ▒▒█████████  █████ ▒▒████ ██████████ █████   █████
-▒▒▒▒▒          ▒▒▒▒▒▒▒▒▒       ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒   ▒▒▒▒▒▒▒▒▒  ▒▒▒▒▒   ▒▒▒▒ ▒▒▒▒▒▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒   
+ ██▓███   ▄████▄      ▄████▄   ██░ ██ ▓█████  ▄████▄   ██ ▄█▀▓█████  ██▀███  
+▓██░  ██▒▒██▀ ▀█     ▒██▀ ▀█  ▓██░ ██▒▓█   ▀ ▒██▀ ▀█   ██▄█▒ ▓█   ▀ ▓██ ▒ ██▒
+▓██░ ██▓▒▒▓█    ▄    ▒▓█    ▄ ▒██▀▀██░▒███   ▒▓█    ▄ ▓███▄░ ▒███   ▓██ ░▄█ ▒
+▒██▄█▓▒ ▒▒▓▓▄ ▄██▒   ▒▓▓▄ ▄██▒░▓█ ░██ ▒▓█  ▄ ▒▓▓▄ ▄██▒▓██ █▄ ▒▓█  ▄ ▒██▀▀█▄  
+▒██▒ ░  ░▒ ▓███▀ ░   ▒ ▓███▀ ░░▓█▒░██▓░▒████▒▒ ▓███▀ ░▒██▒ █▄░▒████▒░██▓ ▒██▒
+▒▓▒░ ░  ░░ ░▒ ▒  ░   ░ ░▒ ▒  ░ ▒ ░░▒░▒░░ ▒░ ░░ ░▒ ▒  ░▒ ▒▒ ▓▒░░ ▒░ ░░ ▒▓ ░▒▓░
+░▒ ░       ░  ▒        ░  ▒    ▒ ░▒░ ░ ░ ░  ░  ░  ▒   ░ ░▒ ▒░ ░ ░  ░  ░▒ ░ ▒░
+░░       ░           ░         ░  ░░ ░   ░   ░        ░ ░░ ░    ░     ░░   ░ 
+         ░ ░         ░ ░       ░  ░  ░   ░  ░░ ░      ░  ░      ░  ░   ░     
+         ░           ░                       ░                               
 '@
+
+        # 👉 WICHTIG: Split in Lines (FIX!)
         $bannerLines = $banner -split "`n"
     }
 
-    # Stelle Console-Ausgabe-Encoding auf UTF8, falls möglich
+    # UTF8 Encoding setzen
     try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
 
     foreach ($l in $bannerLines) {
-        if ($Colored) { Write-Host $l -ForegroundColor Cyan } else { Write-Host $l }
-        if ($OutFile -ne "") { $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 }
+        if ($Colored) { 
+            Write-Host $l -ForegroundColor Red   # 🔴 HIER IST DEINE FARBE
+        } else { 
+            Write-Host $l 
+        }
+
+        if ($OutFile -ne "") { 
+            $l | Out-File -FilePath $OutFile -Append -Encoding UTF8 
+        }
     }
+
     Write-Host ""
 }
-
+    
 function Log {
     param(
         [string]$Text,
         [string]$Color = 'Default',
-        [switch]$NoConsole,
-        [string]$Category = ''
+        [switch]$NoConsole
     )
     if ($null -eq $Text) { $Text = "" }
     if ($OutFile -ne "") {
-        try { Add-Content -Path $OutFile -Value $Text -Encoding UTF8 -ErrorAction SilentlyContinue } catch {}
+        $Text | Out-File -FilePath $OutFile -Append -Encoding UTF8
     }
     if ($global:LiveLogPath -and ($global:LiveLogPath -ne '')) {
-        # Nur bestimmte Kategorien in das Live-Notepad-Log schreiben (nur Prozesse und Dateien)
-        if ($Category -in @('process','file')) {
-            try { Add-Content -Path $global:LiveLogPath -Value $Text -Encoding UTF8 -ErrorAction SilentlyContinue } catch {}
-        }
+        try { $Text | Out-File -FilePath $global:LiveLogPath -Append -Encoding UTF8 -ErrorAction SilentlyContinue } catch {}
     }
     if (-not $NoConsole) {
         switch ($Color.ToLower()) {
@@ -115,7 +124,7 @@ function Start-LiveLogger {
     if ($OpenNotepad) {
         try { Start-Process -FilePath 'notepad.exe' -ArgumentList $global:LiveLogPath -WindowStyle Normal } catch {}
     }
-    Log -Text ("Live-Log-Datei: {0}" -f $global:LiveLogPath) -Color 'white'
+    Log("Live-Log-Datei: $global:LiveLogPath", 'white')
 }
 
 # Liefert globale Pfade zum Scannen wenn keine spezifischen Installationspfade vorhanden sind
@@ -165,15 +174,10 @@ function Copy-RecycleToDownloads {
                 }
             }
             $destFolder = Join-Path $base $category
-                try {
-                    $destNS = $shell.Namespace($destFolder)
-                    if ($destNS) {
-                        $destNS.CopyHere($it)
-                        Log -Text ("Kopiert: {0} -> {1}" -f $name, $destFolder) -Color 'white' -Category 'file'
-                    } else {
-                        Log -Text ("Fehler beim Zugriff auf Zielordner: {0}" -f $destFolder) -Color 'red'
-                    }
-                } catch { Log -Text ("Fehler beim Kopieren von {0}: {1}" -f $name, $_) -Color 'red' }
+            try {
+                $destNS = $shell.Namespace($destFolder)
+                if ($destNS) { $destNS.CopyHere($it) ; Log("Kopiert: $name -> $destFolder") } else { Log("Fehler beim Zugriff auf Zielordner: $destFolder", 'red') }
+            } catch { Log(("Fehler beim Kopieren von {0}: {1}" -f $name, $_), 'red') }
         }
         Write-Status "Papierkorb-Kopie abgeschlossen." 'done'
     } catch {
@@ -182,34 +186,14 @@ function Copy-RecycleToDownloads {
     }
 }
 
-# Wenn kein `-OutFile` angegeben wurde, erstelle automatisch einen nummerierten Report
-if ($OutFile -eq "") {
-    try {
-        try { $cwd = (Get-Location).Path } catch { $cwd = $PWD.Path }
-        $pcDir = Join-Path $cwd 'pc-check'
-        if (-not (Test-Path $pcDir)) { New-Item -Path $pcDir -ItemType Directory -Force | Out-Null }
-        $existing = Get-ChildItem -Path $pcDir -Filter 'pc_check-report-scan*.txt' -File -ErrorAction SilentlyContinue
-        $max = 0
-        foreach ($f in $existing) {
-            if ($f.Name -match 'pc_check-report-scan(\d+)\.txt') {
-                $n = [int]$matches[1]
-                if ($n -gt $max) { $max = $n }
-            }
-        }
-        $num = $max + 1
-        $OutFile = Join-Path $pcDir ("pc_check-report-scan{0}.txt" -f $num)
-    } catch {
-        Write-Warning "Konnte automatischen Ausgabepfad nicht erstellen: $_"
-        $OutFile = Join-Path $env:TEMP ("pc_check-report-scan{0}.txt" -f ([math]::Abs([int](Get-Random -Minimum 1000 -Maximum 9999))))
-    }
-}
-
 # Initialisiere Ausgabe-Datei
-try {
-    if (Test-Path $OutFile) { Remove-Item -Path $OutFile -Force -ErrorAction SilentlyContinue }
-    "" | Out-File -FilePath $OutFile -Encoding UTF8
-} catch {
-    Write-Warning "Konnte Ausgabedatei nicht vorbereiten: $_"
+if ($OutFile -ne "") {
+    try {
+        if (Test-Path $OutFile) { Remove-Item -Path $OutFile -Force -ErrorAction SilentlyContinue }
+        "" | Out-File -FilePath $OutFile -Encoding UTF8
+    } catch {
+        Write-Warning "Konnte Ausgabedatei nicht vorbereiten: $_"
+    }
 }
 
 # Banner anzeigen
@@ -231,15 +215,17 @@ function Write-Status {
         [string]$Message,
         [ValidateSet('start','done','info','warn','error')][string]$State = 'info'
     )
+
     switch ($State) {
-        'start' { $prefix='[+]'; $color='magenta' }
-        'done'  { $prefix='[+]'; $color='magenta' }
-        'info'  { $prefix='[ ]'; $color='cyan' }
-        'warn'  { $prefix='[!]'; $color='yellow' }
-        'error' { $prefix='[-]'; $color='red' }
+        'start' { $prefix='[-]'; $color='red' }        # 🔴 -
+        'done'  { $prefix='[+]'; $color='magenta' }    # 🟣 +
+        'info'  { $prefix='[ ]'; $color='yellow' }     # 🟡
+        'warn'  { $prefix='[!]'; $color='yellow' }     # 🟡 !
+        'error' { $prefix='[-]'; $color='red' }        # 🔴 -
     }
+
     $text = "{0} {1}" -f $prefix, $Message
-    Log -Text $text -Color $color
+    Log $text $color
 }
 
 function Check-ValTracker {
@@ -294,76 +280,6 @@ function Check-ValTracker {
     $usernames = $usernames | Where-Object { $_ -and $_.Trim().Length -gt 0 } | Select-Object -Unique
     Write-Status "VAL Tracker Prüfung beendet." 'done'
     return @{ Found = $true; Installs = $foundInstalls; Accounts = $usernames }
-}
-
-# Cheat-Risiko Zusammenfassung: scannt gefundene Installationspfade und schätzt Anteil verdächtiger Dateien
-function Summarize-CheatRisk {
-    param(
-        [string[]]$Installs
-    )
-    Write-Status "Erstelle Cheat-Risiko Zusammenfassung..." 'start'
-    try {
-        # Flatten nested arrays to avoid passing arrays into path functions
-        $flat = @()
-        foreach ($it in $Installs) {
-            if ($it -is [System.Array]) { foreach ($x in $it) { $flat += $x } } else { $flat += $it }
-        }
-        $Installs = $flat | Where-Object { $_ -and ([string]::IsNullOrEmpty($_) -eq $false) } | Select-Object -Unique
-
-        if (-not $Installs -or $Installs.Count -eq 0) {
-            Log("Keine Installationspfade vorhanden; Cheat-Zusammenfassung übersprungen.", 'yellow')
-            Write-Status "Cheat-Risiko Zusammenfassung übersprungen." 'info'
-            return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
-        }
-
-        $nameRx = '(?i)\b(cheat|cheats|cheater|aimbot|triggerbot|wallhack|esp|injector|inject|loader|cheatengine|trainer|hook|bypass|spoof|untrusted|modmenu|hack|hacks|rage|aim)\b'
-        $contentRx = '(?i)\b(aimbot|triggerbot|wallhack|esp|cheatengine|injector|dllinject|anti[-_ ]?cheat|bypass|untrusted|hook|trainer|cheat)\b'
-
-        $totalFiles = 0
-        $suspicious = @()
-
-        foreach ($root in $Installs) {
-            if (-not $root) { continue }
-            try {
-                if (-not (Test-Path $root)) { continue }
-                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
-                if ($files) {
-                    $totalFiles += $files.Count
-                    $nameMatches = $files | Where-Object { $_.Name -match $nameRx }
-                    if ($nameMatches) { $suspicious += $nameMatches }
-
-                    $candidates = $files | Where-Object { $_.Length -lt 524288 -and -not ($_.Name -match $nameRx) }
-                    foreach ($f in $candidates) {
-                        try {
-                            $raw = Get-Content -Raw -Path $f.FullName -ErrorAction SilentlyContinue -Encoding UTF8
-                            if ($raw -and ($raw -match $contentRx)) { $suspicious += $f }
-                        } catch { }
-                    }
-                }
-            } catch { }
-        }
-
-        $suspiciousUnique = $suspicious | Select-Object -Unique
-        $suspiciousCount = $suspiciousUnique.Count
-        $percent = 0
-        if ($totalFiles -gt 0) { $percent = [math]::Round(($suspiciousCount / $totalFiles) * 100, 2) }
-
-        Section "Cheat-Risiko Zusammenfassung"
-        Log("Gesamtdateien gescannt: $totalFiles")
-        Log("Mögliche Cheat-Dateien: $suspiciousCount")
-        Log("Geschätzter Cheat-Anteil: $percent %")
-        if ($suspiciousCount -gt 0) {
-            # Überschrift nicht ins Live-Log schreiben, nur die Dateizeilen
-            Log("Top verdächtige Dateien (Beispiel):", 'yellow')
-            foreach ($f in $suspiciousUnique | Select-Object -First 10) { Log -Text (" - {0}" -f $f.FullName) -Color 'yellow' -Category 'file' }
-        }
-
-        Write-Status "Cheat-Risiko Zusammenfassung abgeschlossen." 'done'
-        return @{ Total = $totalFiles; Potential = $suspiciousCount; Percent = $percent; Samples = $suspiciousUnique }
-    } catch {
-        Write-Status "Cheat-Risiko Zusammenfassung fehlgeschlagen." 'error'
-        return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
-    }
 }
 
 Write-Status "Starte System-Übersicht..." 'start'
@@ -431,8 +347,7 @@ try {
 
     $top = $procList | Select-Object -First 25
     foreach ($pp in $top) {
-        $line = "{0,-25} PID:{1,6} CPU:{2,7} Mem(MB):{3,8} Path:{4}" -f $pp.Name, $pp.Id, $pp.CPU, $pp.MemoryMB, ($pp.Path -replace '\\','\\')
-        Log -Text $line -Color 'white' -Category 'process'
+        Log("{0,-25} PID:{1,6} CPU:{2,7} Mem(MB):{3,8} Path:{4}" -f $pp.Name, $pp.Id, $pp.CPU, $pp.MemoryMB, ($pp.Path -replace '\\','\\'))
     }
     Write-Status "Prozessliste abgeschlossen." 'done'
 } catch {
@@ -440,90 +355,41 @@ try {
     Write-Status "Prozessliste fehlgeschlagen." 'error'
 }
 
-Write-Status "Starte Dateisystem-Scan (AppData, Spiele, Programme)..." 'start'
-Section "Datei-Scan (AppData & Programme)"
+Write-Status "Prüfe kürzlich beendete Prozesse..." 'start'
+Section "Kürzlich beendete Prozesse"
+$since = (Get-Date).AddDays(-1)
+$found = $false
 try {
-    # defensive construction of scan roots
-    $roots = @(Get-GlobalScanRoots)
-    $gamePaths = @()
-    foreach ($pfEntry in @($env:ProgramFiles, ${env:ProgramFiles(x86)})) {
-        # Ensure we work with a single string path even if env vars yield arrays
-        $pf = $pfEntry
-        if ($pf -is [array]) { $pf = $pf | Select-Object -First 1 }
-        if ($pf) { $pf = [string]$pf }
-        if ($pf -and (Test-Path $pf)) {
-            try { $steam = Join-Path -Path $pf -ChildPath 'Steam' } catch { $steam = $null }
-            if ($steam -and (Test-Path $steam)) { $gamePaths += $steam }
-            try { $epic = Join-Path -Path $pf -ChildPath 'Epic Games' } catch { $epic = $null }
-            if ($epic -and (Test-Path $epic)) { $gamePaths += $epic }
-            try { $ubisoft = Join-Path -Path $pf -ChildPath 'Ubisoft' } catch { $ubisoft = $null }
-            if ($ubisoft -and (Test-Path $ubisoft)) { $gamePaths += $ubisoft }
-            try { $riot = Join-Path -Path $pf -ChildPath 'Riot Games' } catch { $riot = $null }
-            if ($riot -and (Test-Path $riot)) { $gamePaths += $riot }
-            try { $gog = Join-Path -Path $pf -ChildPath 'GOG Galaxy' } catch { $gog = $null }
-            if ($gog -and (Test-Path $gog)) { $gamePaths += $gog }
+    $events = Get-WinEvent -FilterHashtable @{LogName='Security'; Id=4689; StartTime=$since} -ErrorAction Stop
+    if ($events -and $events.Count -gt 0) {
+        $found = $true
+        foreach ($e in $events | Select-Object -First 50) {
+            Log("Time: $($e.TimeCreated) - EventID: $($e.Id)")
+            Log($e.Message)
+            Log("")
         }
     }
-    $possibleUserGamePaths = @()
-    try { $p = Join-Path -Path ([string]$env:LOCALAPPDATA) -ChildPath 'Programs' ; if ($p -and (Test-Path $p)) { $possibleUserGamePaths += $p } } catch {}
-    try { $p = Join-Path -Path ([string]$env:USERPROFILE) -ChildPath 'Games' ; if ($p -and (Test-Path $p)) { $possibleUserGamePaths += $p } } catch {}
-    try { $p = Join-Path -Path ([string]$env:USERPROFILE) -ChildPath 'AppData\Local\Temp' ; if ($p -and (Test-Path $p)) { $possibleUserGamePaths += $p } } catch {}
-
-    if ($gamePaths) { $roots += $gamePaths }
-    if ($possibleUserGamePaths) { $roots += $possibleUserGamePaths }
-    # If Quick mode is requested, avoid scanning the full user profile (can be very large)
-    if ($Quick) {
-        $roots = $roots | Where-Object { $_ -and (Test-Path $_) -and ($_ -ne [string]::Empty) -and ($_ -ne [string]$env:USERPROFILE) } | Select-Object -Unique
-    } else {
-        $roots = $roots | Where-Object { $_ -and (Test-Path $_) } | Select-Object -Unique
-    }
-
-    Log("Scan-Roots: $($roots -join '; ')", 'white')
-
-    # Inline Cheat-Scan (Fallback, schreibt Verdachtsdateien in Live-Log)
-    $nameRx = '(?i)\b(cheat|cheats|cheater|aimbot|triggerbot|wallhack|esp|injector|inject|loader|cheatengine|trainer|hook|bypass|spoof|untrusted|modmenu|hack|hacks|rage|aim)\b'
-    $contentRx = '(?i)\b(aimbot|triggerbot|wallhack|esp|cheatengine|injector|dllinject|anti[-_ ]?cheat|bypass|untrusted|hook|trainer|cheat)\b'
-    $totalFiles = 0
-    $suspicious = @()
-    # Quick mode limits files per root to speed up the scan
-    if ($Quick) { $perRootLimit = 2000 } else { $perRootLimit = $null }
-    foreach ($root in $roots) {
-        if (-not $root) { continue }
-        try {
-            if ($Quick -and $perRootLimit) {
-                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First $perRootLimit
-            } else {
-                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
-            }
-            if ($files) {
-                $totalFiles += $files.Count
-                $nameMatches = $files | Where-Object { $_.Name -match $nameRx }
-                if ($nameMatches) { $suspicious += $nameMatches }
-                $candidates = $files | Where-Object { $_.Length -lt 524288 -and -not ($_.Name -match $nameRx) }
-                foreach ($f in $candidates) {
-                    try {
-                        $raw = Get-Content -Raw -Path $f.FullName -ErrorAction SilentlyContinue -Encoding UTF8
-                        if ($raw -and ($raw -match $contentRx)) { $suspicious += $f }
-                    } catch { }
-                }
-            }
-        } catch { }
-    }
-    $suspiciousUnique = $suspicious | Select-Object -Unique
-    $suspiciousCount = $suspiciousUnique.Count
-    $percent = 0
-    if ($totalFiles -gt 0) { $percent = [math]::Round(($suspiciousCount / $totalFiles) * 100, 2) }
-    Log("Scan-Ergebnis: Dateien gescannt: $totalFiles | Mögliche Cheats: $suspiciousCount | Anteil: $percent%", 'cyan')
-    if ($suspiciousCount -gt 0) {
-        foreach ($f in $suspiciousUnique | Select-Object -First 20) { Log -Text ("- {0}" -f $f.FullName) -Color 'yellow' -Category 'file' }
-    }
-    $summary = @{ Total = $totalFiles; Potential = $suspiciousCount; Percent = $percent; Samples = $suspiciousUnique }
-    # Set global cheat summary for later reuse
-    $global:cheatSummary = $summary
-    Write-Status "Dateisystem-Scan abgeschlossen." 'done'
 } catch {
-    Log("Fehler beim Dateisystem-Scan: $_", 'red')
-    Write-Status "Dateisystem-Scan fehlgeschlagen." 'error'
+    # Fallback: Sysmon (EventID 5 = Process Terminated)
+    try {
+        $events = Get-WinEvent -FilterHashtable @{LogName='Microsoft-Windows-Sysmon/Operational'; Id=5; StartTime=$since} -ErrorAction Stop
+        if ($events -and $events.Count -gt 0) {
+            $found = $true
+            foreach ($e in $events | Select-Object -First 50) {
+                Log("Time: $($e.TimeCreated) - Sysmon EventID 5")
+                Log($e.Message)
+                Log("")
+            }
+        }
+    } catch {
+        # ignore
+    }
+}
+if (-not $found) {
+    Log("Keine Informationen zu beendeten Prozessen gefunden. (Event-Logging möglicherweise nicht aktiviert oder fehlende Berechtigungen)")
+    Write-Status "Keine Informationen zu beendeten Prozessen gefunden." 'warn'
+} else {
+    Write-Status "Kürzlich beendete Prozesse verarbeitet." 'done'
 }
 
 Write-Status "Prüfe Papierkorb (gelöschte Dateien)..." 'start'
@@ -542,11 +408,11 @@ try {
                 if (-not $orig) { $orig = $rb.GetDetailsOf($it,2) }
                 $date = $rb.GetDetailsOf($it,2)
                 $size = $rb.GetDetailsOf($it,3)
-                Log -Text ("Name: {0}" -f $name) -Color 'white' -Category 'file'
-                Log -Text ("Original: {0}" -f $orig) -Color 'white' -Category 'file'
-                if ($date) { Log -Text ("Gelöscht am: {0}" -f $date) -Color 'white' -Category 'file' }
-                if ($size) { Log -Text ("Größe: {0}" -f $size) -Color 'white' -Category 'file' }
-                Log -Text "" -Color 'white'
+                Log("Name: $name")
+                Log("Original: $orig")
+                if ($date) { Log("Gelöscht am: $date") }
+                if ($size) { Log("Größe: $size") }
+                Log("")
             }
         }
     } else {
@@ -669,17 +535,73 @@ Log("Fertig. Hinweis: Einige Informationen (Event-Logs, PnP) benötigen Administ
 if ($OutFile -ne "") { Log("Report gespeichert nach: $OutFile") }
 Write-Status "Alle Prüfungen abgeschlossen." 'done'
 
-# Duplicate Summarize-CheatRisk function removed; single definition exists earlier.
+# Cheat-Risiko Zusammenfassung: scannt gefundene Installationspfade und schätzt Anteil verdächtiger Dateien
+function Summarize-CheatRisk {
+    param(
+        [string[]]$Installs
+    )
+    Write-Status "Erstelle Cheat-Risiko Zusammenfassung..." 'start'
+    try {
+        if (-not $Installs -or $Installs.Count -eq 0) {
+            Log("Keine Installationspfade vorhanden; Cheat-Zusammenfassung übersprungen.", 'yellow')
+            Write-Status "Cheat-Risiko Zusammenfassung übersprungen." 'info'
+            return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
+        }
+
+        $nameRx = '(?i)\b(cheat|cheats|cheater|aimbot|triggerbot|wallhack|esp|injector|inject|loader|cheatengine|trainer|hook|bypass|spoof|untrusted|modmenu|hack|hacks|rage|aim)\b'
+        $contentRx = '(?i)\b(aimbot|triggerbot|wallhack|esp|cheatengine|injector|dllinject|anti[-_ ]?cheat|bypass|untrusted|hook|trainer|cheat)\b'
+
+        $totalFiles = 0
+        $suspicious = @()
+
+        foreach ($root in $Installs) {
+            if (-not $root) { continue }
+            try {
+                if (-not (Test-Path $root)) { continue }
+                $files = Get-ChildItem -Path $root -Recurse -File -ErrorAction SilentlyContinue
+                if ($files) {
+                    $totalFiles += $files.Count
+                    $nameMatches = $files | Where-Object { $_.Name -match $nameRx }
+                    if ($nameMatches) { $suspicious += $nameMatches }
+
+                    $candidates = $files | Where-Object { $_.Length -lt 524288 -and -not ($_.Name -match $nameRx) }
+                    foreach ($f in $candidates) {
+                        try {
+                            $raw = Get-Content -Raw -Path $f.FullName -ErrorAction SilentlyContinue -Encoding UTF8
+                            if ($raw -and ($raw -match $contentRx)) { $suspicious += $f }
+                        } catch { }
+                    }
+                }
+            } catch { }
+        }
+
+        $suspiciousUnique = $suspicious | Select-Object -Unique
+        $suspiciousCount = $suspiciousUnique.Count
+        $percent = 0
+        if ($totalFiles -gt 0) { $percent = [math]::Round(($suspiciousCount / $totalFiles) * 100, 2) }
+
+        Section "Cheat-Risiko Zusammenfassung"
+        Log("Gesamtdateien gescannt: $totalFiles")
+        Log("Mögliche Cheat-Dateien: $suspiciousCount")
+        Log("Geschätzter Cheat-Anteil: $percent %")
+        if ($suspiciousCount -gt 0) {
+            Log("Top verdächtige Dateien (Beispiel):", 'yellow')
+            foreach ($f in $suspiciousUnique | Select-Object -First 10) { Log(" - $($f.FullName)", 'yellow') }
+        }
+
+        Write-Status "Cheat-Risiko Zusammenfassung abgeschlossen." 'done'
+        return @{ Total = $totalFiles; Potential = $suspiciousCount; Percent = $percent; Samples = $suspiciousUnique }
+    } catch {
+        Write-Status "Cheat-Risiko Zusammenfassung fehlgeschlagen." 'error'
+        return @{ Total = 0; Potential = 0; Percent = 0; Samples = @() }
+    }
+}
 
 # Führe Zusammenfassung aus (verwende Installationspfade aus Check-ValTracker wenn vorhanden)
-if (-not $global:cheatSummary) {
-    $insts = @()
-    try { if ($val -and $val.Installs -and $val.Installs.Count -gt 0) { $insts = $val.Installs } } catch { }
-    if (-not $insts -or $insts.Count -eq 0) { $insts = Get-GlobalScanRoots }
-    $cheatSummary = Summarize-CheatRisk -Installs $insts
-} else {
-    $cheatSummary = $global:cheatSummary
-}
+$insts = @()
+try { if ($val -and $val.Installs -and $val.Installs.Count -gt 0) { $insts = $val.Installs } } catch { }
+if (-not $insts -or $insts.Count -eq 0) { $insts = Get-GlobalScanRoots }
+$cheatSummary = Summarize-CheatRisk -Installs $insts
 Log("")
 Log("Cheat-Summary: Dateien gescannt: $($cheatSummary.Total) | Mögliche Cheats: $($cheatSummary.Potential) | Anteil: $($cheatSummary.Percent)%", 'cyan')
 
